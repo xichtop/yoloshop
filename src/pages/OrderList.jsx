@@ -1,23 +1,21 @@
 import React, { Suspense} from 'react';
 import { BrowserRouter, Route} from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Routes from './routes/Routes';
+import HeaderOrderList from '../components/HeaderOrderList';
+import RoutesOrderList from '../routes/RoutesOrderList';
 
-function App() {
+function OrderList() {
   return (
-    <div className="App">
+    <div className="order-list">
       <Suspense fallback = {<div>Loading...</div>}>
         <BrowserRouter >
         <Route render={props => (
                 <div>
-                    <Header {...props}/>
+                    <HeaderOrderList {...props}/>
                     <div className="container">
                         <div className="main">
-                            <Routes/>
+                            <RoutesOrderList/>
                         </div>
                     </div>
-                    <Footer/>
                 </div>
             )}/>
         </BrowserRouter>
@@ -26,4 +24,4 @@ function App() {
   );
 }
 
-export default App;
+export default OrderList;
