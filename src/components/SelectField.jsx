@@ -43,7 +43,7 @@ function SelectField(props) {
 
   return (
     <FormGroup>
-      {label && <Label for={name}>{label}</Label>}
+      {label && <Label for={name} style={{ padding: '10px 0'}}>{label}</Label>}
 
       <Select
         id={name}

@@ -1,10 +1,9 @@
 import axios from 'axios';
-import queryString from 'query-string';
-import { useSelector } from 'react-redux';
+// import queryString from 'query-string';
 
 const axiosClient = axios.create({
   // baseURL: process.env.REACT_APP_API_URL,
-  baseURL: "http://192.168.1.8:3001",
+  baseURL: "http://localhost:3001",
   headers: {
     'content-type': 'application/json',
   },
@@ -13,11 +12,6 @@ const axiosClient = axios.create({
 
 
 axiosClient.interceptors.request.use((config) => {
-  //   const token = await getFirebaseToken();
-  //   if (token) {
-  //     config.headers.Authorization = `Bearer ${token}`;
-  //   }
-
   return config;
 });
 

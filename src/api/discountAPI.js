@@ -1,14 +1,18 @@
 import axiosClient from "./axiosClient";
 
 const discountApi = {
-  getAll: (params) => {
-    const url = '/discount';
-    return axiosClient.get(url, { params });
+  getAll: () => {
+    const url = '/discount/all';
+    return axiosClient.get(url);
   },
 
-  get: (id) => {
+  get: (id, token) => {
     const url = `/discount/${id}`;
-    return axiosClient.get(url);
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 }
 

@@ -30,7 +30,7 @@ const Routes = () => {
             <Route path='/checkout' component={user.Email === '' ? Login : CheckOut}/>
             <Route path='/profile' component={user.Email === '' ? Login : Profile}/>
             <Route path='/changeInfo' component={user.Email === '' ? Login : ChangeInfo}/>
-            <Route path='/showOrder' component={user.Email === '' ? Login : Profile}/>
+            {/* <Route path='/showOrder' component={user.Email === '' ? Login : Profile}/> */}
             <Route component={NotFound} />
         </Switch>
     )

@@ -52,7 +52,7 @@ function ChangeInfo() {
             } catch (error) {
                 console.log("Failed to fetch user: ", error);
             }
-            if (result.successful == true) {
+            if (result.successful === true) {
                 store.addNotification({
                     title: "Wonderful!",
                     message: `Chỉnh sửa tài khoản thành công`,

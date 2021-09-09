@@ -4,6 +4,7 @@ import '../sass/css/infinityorder.css';
 
 import { store } from 'react-notifications-component';
 import { useHistory } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import orderAPI from '../api/orderAPI';
 
 // confirm alert
@@ -14,6 +15,8 @@ function OrderItem(props) {
     const { order } = props;
 
     const history = useHistory();
+
+    const token = useSelector(state => state.user.token);
 
     const handleButton = () => {
         const configNotify = {
@@ -41,7 +44,7 @@ function OrderItem(props) {
         const fetchUpdateOrder = async () => {
             var result = {};
             try {
-                result = await orderAPI.update(order.OrderId);
+                result = await orderAPI.update(order.OrderId, token);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -65,6 +68,14 @@ function OrderItem(props) {
         }
     }
 
+    const handleReview = (productId, OrderId, Color, Size) => {
+        history.push(`/review/${productId}/${OrderId}/${Color}/${Size}`);
+    }
+
+    const hanldeProduct = (ProductId) => {
+        history.push(`/catalog/${ProductId}`);
+    }
+
     return (
         <article class="card">
             <header class="card-header">Order ID: {order.OrderId}</header>
@@ -80,17 +91,24 @@ function OrderItem(props) {
                 <hr />
                 <ul class="row">
                     {order.products.map((product, productIndex) => (
-                        <li key={productIndex} class="col-md-4">
+                        <li key={productIndex} class="col-md-4" >
                             <figure class="itemside mb-3">
                                 <div class="aside"><img src={product.URLPicture} class="img-sm border" /></div>
                                 <figcaption class="info align-self-center">
-                                    <p class="title">{product.Title}</p>
+                                    <p class="title" style={{
+                                        cursor: 'pointer',
+                                    }} onClick={() => hanldeProduct(product.ProductId)}>{product.Title}</p>
                                     <span class="text-muted">Màu: <strong>{product.Color}</strong></span>
                                     <br />
                                     <span class="text-muted">Size: {product.Size}</span><br />
                                     <span class="text-muted">Số lượng: {product.Quantity}</span>
                                 </figcaption>
                             </figure>
+                            {order.Status === 'Delivered' &&  product.Review === 0 ? 
+                            <a class="btn btn-success" data-abc="true" onClick={() => handleReview(product.ProductId, order.OrderId, product.Color, product.Size)}>
+                            Đánh Giá</a> 
+                            : <br />}
+                            
                         </li>
                     ))}
                 </ul>

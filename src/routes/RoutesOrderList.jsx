@@ -4,6 +4,8 @@ import { useSelector } from 'react-redux';
 
 import InfinityOrder from '../components/InfinityOrder';
 import orderAPI from '../api/orderAPI';
+import Review from '../components/Review';
+import Product from '../pages/Product';
 
 const RouteOrderList = () => {
 
@@ -14,6 +16,8 @@ const RouteOrderList = () => {
             <Route path='/orderlist/delivering' exact component={Delivering}/>
             <Route path='/orderlist/delivered' exact component={Delivered}/>
             <Route path='/orderlist/canceled' exact component={Canceled}/>
+            <Route path='/review/:productId/:OrderId/:Color/:Size' component={Review}/>
+            <Route path='/catalog/:slug' component={Product}/>
         </Switch>
     )
 }
@@ -26,12 +30,13 @@ function AllOrder() {
 
     const email = useSelector(state => state.user.user.Email);
 
+    const token = useSelector(state => state.user.token);
+
     useEffect(() => {
         const fetchListOrder = async () => {
             try {
-                const orders = await orderAPI.getAll(email);
+                const orders = await orderAPI.getAll(email, token);
                 setOrders(orders);
-                console.log(orders);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -51,12 +56,13 @@ function Ordered() {
 
     const email = useSelector(state => state.user.user.Email);
 
+    const token = useSelector(state => state.user.token);
+
     useEffect(() => {
         const fetchListOrder = async () => {
             try {
-                const orders = await orderAPI.getAllByStatus(email, 'Ordered');
+                const orders = await orderAPI.getAllByStatus(email, 'Ordered', token);
                 setOrders(orders);
-                console.log(orders);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -76,12 +82,13 @@ function Delivering() {
 
     const email = useSelector(state => state.user.user.Email);
 
+    const token = useSelector(state => state.user.token);
+
     useEffect(() => {
         const fetchListOrder = async () => {
             try {
-                const orders = await orderAPI.getAllByStatus(email, 'Confirmed');
+                const orders = await orderAPI.getAllByStatus(email, 'Confirmed', token);
                 setOrders(orders);
-                console.log(orders);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }
@@ -101,10 +108,12 @@ function Delivered() {
 
     const email = useSelector(state => state.user.user.Email);
 
+    const token = useSelector(state => state.user.token);
+
     useEffect(() => {
         const fetchListOrder = async () => {
             try {
-                const orders = await orderAPI.getAllByStatus(email, 'Delivered');
+                const orders = await orderAPI.getAllByStatus(email, 'Delivered', token);
                 setOrders(orders);
                 console.log(orders);
             } catch (error) {
@@ -126,12 +135,13 @@ function Canceled() {
 
     const email = useSelector(state => state.user.user.Email);
 
+    const token = useSelector(state => state.user.token);
+
     useEffect(() => {
         const fetchListOrder = async () => {
             try {
-                const orders = await orderAPI.getAllByStatus(email, 'Canceled');
+                const orders = await orderAPI.getAllByStatus(email, 'Canceled', token);
                 setOrders(orders);
-                console.log(orders);
             } catch (error) {
                 console.log("Failed to fetch order list: ", error);
             }

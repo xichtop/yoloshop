@@ -1,9 +1,13 @@
 import axiosClient from "./axiosClient";
 
 const paymentApi = {
-  getAll: (params) => {
+  getAll: (token) => {
     const url = '/payment';
-    return axiosClient.get(url, { params });
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 }
 

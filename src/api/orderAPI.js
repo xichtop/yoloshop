@@ -10,19 +10,31 @@ const orderApi = {
   });
   },
 
-  getAll: (email) => {
+  getAll: (email, token) => {
     const url = `/order/all/${email}`;
-    return axiosClient.get(url);
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 
-  getAllByStatus: (email, status) => {
+  getAllByStatus: (email, status, token) => {
     const url = `/order/all/${email}/${status}`;
-    return axiosClient.get(url);
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 
-  update: (orderid) => {
+  update: (orderid, token) => {
     const url = `/order/update/${orderid}`;
-    return axiosClient.get(url);
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   }
 
 }

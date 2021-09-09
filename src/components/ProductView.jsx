@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router'
 
+import productAPI from '../api/productAPI';
+
 import Button from './Button'
 import numberWithCommas from '../utils/numberWithCommas'
 
@@ -10,9 +12,11 @@ import { addProductCart, updateProduct } from '../slice/cartSlice'
 
 import { store } from 'react-notifications-component';
 
+import ProductReview from './ProductReview';
+
 const ProductView = (props) => {
 
-    const productIem = props.product
+    const productIem = props.product;
 
     const dispatch = useDispatch();
 
@@ -57,21 +61,39 @@ const ProductView = (props) => {
         return true
     }
 
-    const addToCart = () => {
+    const configNotify = {
+        insert: "top",
+        container: "top-right",
+        animationIn: ["animate__animated", "animate__fadeIn"],
+        animationOut: ["animate__animated", "animate__fadeOut"],
+        dismiss: {
+            duration: 3000,
+            onScreen: true
+        }
+    }
+
+    const addToCart = async () => {
         if (check()) {
-            if (productIem.Quantity < quantity) {
+            var result = {};
+            try {
+                result = await productAPI.getQuantity(productIem.ProductId);
+            } catch (error) {
+                console.log("Failed to fetch product list: ", error);
+            }
+            if (result.Quantity === 0) {
+                store.addNotification({
+                    title: "Sản phẩm đã hết hàng!",
+                    message: "Vui lòng chọn sản phẩm khác!",
+                    type: "warning",
+                    ...configNotify
+                });
+            }
+            else if (result.Quantity < quantity) {
                 store.addNotification({
                     title: "Số lượng sản phẩm trong kho không đủ!",
                     message: "Vui lòng giảm số lượng",
                     type: "warning",
-                    insert: "top",
-                    container: "top-right",
-                    animationIn: ["animate__animated", "animate__fadeIn"],
-                    animationOut: ["animate__animated", "animate__fadeOut"],
-                    dismiss: {
-                        duration: 2000,
-                        onScreen: true
-                    }
+                    ...configNotify
                 });
             }
             else {
@@ -102,19 +124,11 @@ const ProductView = (props) => {
                     title: "Wonderful!",
                     message: "Thêm vào giỏ hàng thành công!",
                     type: "success",
-                    insert: "top",
-                    container: "top-right",
-                    animationIn: ["animate__animated", "animate__fadeIn"],
-                    animationOut: ["animate__animated", "animate__fadeOut"],
-                    dismiss: {
-                        duration: 2000,
-                        onScreen: true
-                    }
+                    ...configNotify
                 });
             }
 
         }
-        console.log({ color, size, quantity })
     }
 
     const goToCart = () => {
@@ -135,18 +149,18 @@ const ProductView = (props) => {
                 <div className="product__images__main">
                     <img src={previewImg} alt="" />
                 </div>
-                <div className={`product-description ${descriptionExpand ? 'expand' : ''}`}>
+                <div className={`product-description1 ${descriptionExpand ? 'expand' : ''}`}>
                     <div className="product-description__title">
                         Chi tiết sản phẩm
                     </div>
                     <div className="product-description__content" dangerouslySetInnerHTML={{ __html: productIem.Description }}></div>
-                    <div className="product-description__toggle">
-                        <Button size="sm" onClick={() => setDescriptionExpand(!descriptionExpand)}>
-                            {
-                                descriptionExpand ? 'Thu gọn' : 'Xem thêm'
-                            }
-                        </Button>
+
+                </div>
+                <div className={`product-description ${descriptionExpand ? 'expand' : ''}`}>
+                    <div className="product-description__title">
+                        Đánh giá
                     </div>
+                    <ProductReview />
                 </div>
             </div>
             <div className="product__info">

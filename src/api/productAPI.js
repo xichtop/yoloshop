@@ -7,8 +7,12 @@ const productApi = {
     return axiosClient.get(url);
   },
 
-  get: (id) => {
+  getQuantity: (ProductId) => {
+    const url = `/products/getquantity/${ProductId}`;
+    return axiosClient.get(url);
+  },
 
+  get: (id) => {
     const url = `/products/${id}`;
     return axiosClient.get(url);
   },

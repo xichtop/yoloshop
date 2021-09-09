@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-
+import { useDispatch } from 'react-redux';
 import productAPI from '../api/productAPI'
+import reviewAPI from '../api/reviewAPI'
 
 import Helmet from '../components/Helmet'
 import Section, { SectionBody, SectionTitle } from '../components/Section'
@@ -8,16 +9,20 @@ import Grid from '../components/Grid'
 import ProductCard from '../components/ProductCard'
 import ProductView from '../components/ProductView'
 
+import { add } from '../slice/reviewSlice';
+
 const Product = props => {
 
-    const productId = props.match.params.slug;
+    const productId = props.match.params.slug; 
+
+    const dispatch = useDispatch();
 
     const initialProduct = {
         ProductId: "AT01",
         Description: "Sự hiện diện của những chiếc áo thun basic cổ tròn trong tủ đồ của bạn chính là chìa khóa giúp cho bạn có thêm nhiều outfit thú vị mà lại không cần đến quá nhiều món đồ. Áo thun nữ cotton cổ tròn basic chính là vũ khí tiện dụng cho các chị em trong trang phục hàng ngày!",
         CategoryId: "AT",
         URLPicture: "https://storage.googleapis.com/cdn.nhanh.vn/store/7136/ps/20210618/18062021030638_1000_x_1500__Dai_dien.jpg",
-        Vote: 5,
+        Vote: 4,
         UnitPrice: 185000,
         Sold: 6,
         Title: "ÁO THUN W2ATN2051003",
@@ -37,6 +42,12 @@ const Product = props => {
             try {
                 const product = await productAPI.get(productId);
                 setCurrentProduct(product);
+                const reviews = await reviewAPI.get(productId);
+                const action = add({
+                    reviews: reviews,
+                    vote: product.Vote
+                })
+                dispatch(action);
             } catch (error) {
                 console.log("Failed to fetch product list: ", error);
             }
@@ -66,7 +77,7 @@ const Product = props => {
         <Helmet title={"Chi Tiết Sản Phẩm"}>
             <Section>
                 <SectionBody>
-                    <ProductView product={currentProduct} />
+                    <ProductView product = {currentProduct}/>
                 </SectionBody>
             </Section>
             <Section>

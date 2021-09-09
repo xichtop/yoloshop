@@ -22,6 +22,7 @@ function App() {
             )}/>
         </BrowserRouter>
       </Suspense>
+      {/* <PayPal /> */}
     </div>
   );
 }

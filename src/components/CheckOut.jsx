@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useHistory } from "react-router-dom";
 import numberWithCommas from '../utils/numberWithCommas';
@@ -23,6 +23,9 @@ import { store } from 'react-notifications-component';
 import { confirmAlert } from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 
+import ReactDOM from "react-dom"
+const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
+
 const CheckOut = () => {
 
     const products = useSelector(state => state.cart.products);
@@ -34,6 +37,10 @@ const CheckOut = () => {
     const user = useSelector(state => state.user.user);
 
     const token = useSelector(state => state.user.token);
+
+    const [isPayPal, setIsPayPal] = useState(false);
+
+    const [isPaid, setIsPaid] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -48,8 +55,8 @@ const CheckOut = () => {
             var shippings = [];
             var payments = [];
             try {
-                shippings = await shippingAPI.getAll();
-                payments = await paymentAPI.getAll();
+                shippings = await shippingAPI.getAll(token);
+                payments = await paymentAPI.getAll(token);
             } catch (error) {
                 console.log("Failed to fetch options: ", error);
             }
@@ -69,14 +76,14 @@ const CheckOut = () => {
             });
         }
         fetchOptions();
-    }, [])
+    })
 
     var total = 0;
     products.forEach(product => {
         total += product.UnitPrice * product.Quantity;
     })
     total -= total * discount / 100;
-
+    const totalUSD = (total / 22826.2).toFixed(2);
     const configNotify = {
         insert: "top",
         container: "top-right",
@@ -98,12 +105,50 @@ const CheckOut = () => {
         paymentMethod: Yup.string().required('Phương thức thanh toán không được bổ trống'),
     });
 
+    const createOrder = (data, actions) => {
+        return actions.order.create({
+            ContentType: "application/json",
+            purchase_units: [
+                {
+                    amount: {
+                        currency_code: "USD",
+                        value: totalUSD, // 1USD = 22826,2 VND
+                    },
+                },
+            ],
+
+        });
+    };
+
+    const onApprove = (data, actions) => {
+        return actions.order.capture()
+            .then(function (details) {
+                // This function shows a transaction success message to your buyer.
+                alert('Transaction completed by ' + details.payer.name.given_name);
+                console.log(details); //payer_id .payer.email_address
+            })
+            .then(function () {
+                store.addNotification({
+                    title: "Wonderful!",
+                    message: `Thanh toán thành công!`,
+                    type: "success",
+                    dismiss: {
+                        duration: 6000,
+                        onScreen: true
+                    },
+                    ...configNotify
+                });
+                setIsPayPal(false);
+                setIsPaid(true);
+            });
+    }
+
     const handleChangeInfo = () => {
         history.push('/changeInfo');
     }
 
     const handleSubmit = async (values) => {
-        if (user.Email == '') {
+        if (user.Email === '') {
             store.addNotification({
                 title: "Yêu cầu đăng nhập!",
                 message: `Bạn Vui lòng đăng nhập trước khi thanh toán!`,
@@ -112,28 +157,33 @@ const CheckOut = () => {
             });
             history.push('/login');
         } else {
-            confirmAlert({
-                title: 'Đặt Hàng',
-                message: 'Bạn có chắc chắc muốn đặt đơn hàng này không?',
-                buttons: [
-                  {
-                    label: 'Có',
-                    onClick: () => fetchAddOrder()
-                  },
-                  {
-                    label: 'Không',
-                    onClick: () => {
-                        history.push(`/checkout`);
-                    }
-                  }
-                ],
-                closeOnEscape: true,
-                closeOnClickOutside: true,
-            });
+            if (isPayPal === true && isPaid === false) {
+                alert('Vui lòng thanh toán trước khi đặt hàng!');
+            }
+            else {
+                confirmAlert({
+                    title: 'Đặt Hàng',
+                    message: 'Bạn có chắc chắc muốn đặt đơn hàng này không?',
+                    buttons: [
+                        {
+                            label: 'Có',
+                            onClick: () => fetchAddOrder()
+                        },
+                        {
+                            label: 'Không',
+                            onClick: () => {
+                                history.push(`/checkout`);
+                            }
+                        }
+                    ],
+                    closeOnEscape: true,
+                    closeOnClickOutside: true,
+                });
+            }
 
             const fetchAddOrder = async () => {
                 var item = {
-                    products: products, 
+                    products: products,
                     shipping: values.shippingMethod,
                     payment: values.paymentMethod,
                     email: user.Email,
@@ -144,12 +194,12 @@ const CheckOut = () => {
                 var result = null;
                 try {
                     result = await orderAPI.addItem(item, token);
-                    
+
                 } catch (error) {
                     console.log("Failed to fetch options: ", error);
                 }
-    
-                if (result.successful == true) {
+
+                if (result.successful === true) {
                     store.addNotification({
                         title: "Wonderfull!",
                         message: `Đặt hàng thành công!`,
@@ -162,7 +212,7 @@ const CheckOut = () => {
                     store.addNotification({
                         title: "Error!",
                         message: `Đặt hàng thất bại, vui lòng thử lại sau!`,
-                        type: "error",
+                        type: "danger",
                         ...configNotify
                     });
                     history.push('/');
@@ -261,8 +311,12 @@ const CheckOut = () => {
                 >
                     {formikProps => {
                         // do something here ...
-                        const { values, errors, touched} = formikProps;
-                        console.log({ values, errors, touched });
+                        const { values, errors, touched } = formikProps;
+                        if (values.paymentMethod === 'PayPal') {
+                            setIsPayPal(true);
+                        } else {
+                            setIsPayPal(false);
+                        }
 
                         return (
                             <Form>
@@ -283,9 +337,22 @@ const CheckOut = () => {
                                     options={PAYMENT_OPTIONS}
                                 />
                                 <FormGroup>
-                                    <Button type="submit" color='success'>
-                                        Đặt Hàng
-                                </Button>
+                                    <div style={{
+                                        paddingTop: '85px',
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center'
+                                    }}>
+                                        {isPayPal === true ? <PayPalButton
+                                            createOrder={(data, actions) => createOrder(data, actions)}
+                                            onApprove={(data, actions) => onApprove(data, actions)}
+                                        /> :
+                                            <br />}
+                                        <Button type="submit" color='success'>
+                                            Đặt Hàng
+                                    </Button>
+                                    </div>
                                 </FormGroup>
                             </Form>
                         );

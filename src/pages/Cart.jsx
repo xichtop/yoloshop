@@ -4,11 +4,8 @@ import { useHistory } from "react-router-dom";
 import numberWithCommas from '../utils/numberWithCommas';
 import { Link } from 'react-router-dom'
 import { updateProduct, removeProduct, updateDiscount } from '../slice/cartSlice'
-import discountAPI from '../api/discountAPI'
-
-// import productAPI from '../api/productAPI'
-// import productVariantAPI from '../api/productVariantAPI'
-// import ProductSizeAPI from '../api/productSizeAPI'
+import discountAPI from '../api/discountAPI';
+import productAPI from '../api/productAPI';
 
 import '../sass/css/cart.css';
 
@@ -22,9 +19,13 @@ const Cart = () => {
 
     const user = useSelector(state => state.user.user);
 
+    const token = useSelector(state => state.user.token);
+
     const [total, setTotal] = useState(0);
 
     const [inputDiscount, setInputDiscount] = useState('');
+
+    const [quantities, setQuantities] = useState([]);
 
     const dispatch = useDispatch();
 
@@ -42,20 +43,32 @@ const Cart = () => {
     }
 
     const updateQuantity = (type, product) => {
+        var newProduct = {};
         if (type === 'plus') {
-            var newProduct = {
+            newProduct = {
                 ...product,
                 Quantity: 1,
             };
             const action = updateProduct(newProduct);
             dispatch(action);
         } else {
-            var newProduct = {
-                ...product,
-                Quantity: -1,
-            };
-            const action = updateProduct(newProduct);
-            dispatch(action);
+            const productTemp = products.find(item => item.ProductId === product.ProductId);
+            if(productTemp.Quantity === 1) {
+                newProduct = {
+                    ...product,
+                    Quantity: 0,
+                };
+                const action = updateProduct(newProduct);
+                dispatch(action);
+            } else {
+                newProduct = {
+                    ...product,
+                    Quantity: -1,
+                };
+                const action = updateProduct(newProduct);
+                dispatch(action);
+            }
+            
         }
     }
 
@@ -75,40 +88,65 @@ const Cart = () => {
 
     const handleDiscount = async (e) => {
         e.preventDefault();
-        try {
-            var result = [];
-            result = await discountAPI.get(inputDiscount.trim());
-            if (result.length == 0) {
-                store.addNotification({
-                    title: "Mã giảm giá không tồn tại!",
-                    message: `Bạn Vui lòng kiểm tra lại`,
-                    type: "warning",
-                    ...configNotify
-                });
-            } else if (result[0].Quantity == 0) {
-                store.addNotification({
-                    title: "Mã giảm giá đã hết lượt sử dụng!",
-                    message: `Bạn Vui lòng nhập lại mã khác`,
-                    type: "warning",
-                    ...configNotify
-                });
-            } else {
-                store.addNotification({
-                    title: "Wonderfull!",
-                    message: `Áp dụng mã giảm giá thành công!`,
-                    type: "success",
-                    ...configNotify
-                });
-                const action = updateDiscount({
-                    discount: result[0].PercentDiscount,
-                    discountId: result[0].DiscountId,
-                });
-                dispatch(action);
+        if (inputDiscount.trim() === '') {
+            store.addNotification({
+                title: "Mã giảm giá!",
+                message: `Vui lòng nhập mã giảm giá`,
+                type: "warning",
+                ...configNotify
+            });
+        } else {
+            try {
+                var result = [];
+                result = await discountAPI.get(inputDiscount.trim(), token);
+                if (result.length === 0) {
+                    store.addNotification({
+                        title: "Mã giảm giá không tồn tại!",
+                        message: `Bạn Vui lòng kiểm tra lại`,
+                        type: "warning",
+                        ...configNotify
+                    });
+                } else if (result[0].Quantity === 0) {
+                    store.addNotification({
+                        title: "Mã giảm giá đã hết lượt sử dụng!",
+                        message: `Bạn Vui lòng nhập lại mã khác`,
+                        type: "warning",
+                        ...configNotify
+                    });
+                } else {
+                    store.addNotification({
+                        title: "Wonderfull!",
+                        message: `Áp dụng mã giảm giá thành công!`,
+                        type: "success",
+                        ...configNotify
+                    });
+                    const action = updateDiscount({
+                        discount: result[0].PercentDiscount,
+                        discountId: result[0].DiscountId,
+                    });
+                    dispatch(action);
+                }
+            } catch (error) {
+                console.log("Failed to fetch user: ", error);
             }
-        } catch (error) {
-            console.log("Failed to fetch user: ", error);
         }
     }
+
+    useEffect(() => {
+        var temp = [];
+        const getQuantities = () => {
+            products.forEach( async (product) => {
+                try {
+                    var result = await productAPI.getQuantity(product.ProductId);
+                } catch (error) {
+                    console.log('Failed to fetch quantity: ', error);
+                }
+                temp.push(result.Quantity);
+            })
+        }
+        getQuantities();
+        setQuantities(temp);
+    }, [products])
 
     useEffect(() => {
         var total = 0;
@@ -124,7 +162,7 @@ const Cart = () => {
     }
 
     const handlePay = () => {
-        if (user.Email == '') {
+        if (user.Email === '') {
             store.addNotification({
                 title: "Yêu cầu đăng nhập!",
                 message: `Bạn Vui lòng đăng nhập trước khi đặt hàng!`,
@@ -132,7 +170,7 @@ const Cart = () => {
                 ...configNotify
             });
             history.push('/login');
-        } else if (products.length == 0){
+        } else if (products.length === 0) {
             store.addNotification({
                 title: "Chưa có sản phẩm!",
                 message: `Bạn Vui lòng thêm sản phẩm trước khi đặt hàng!`,
@@ -141,7 +179,29 @@ const Cart = () => {
             });
             history.push('/catalog');
         } else {
-            history.push('/checkout');
+            var check = false;
+            products.forEach((product, index) => {
+                if (quantities[index] === 0) {
+                    store.addNotification({
+                        title: `Sản phẩm ${product.Title} đã hết hàng!`,
+                        message: "Vui lòng xóa sản phẩm!",
+                        type: "warning",
+                        ...configNotify
+                    });
+                    check = true;
+                } else if (quantities[index] < product.Quantity) {
+                    store.addNotification({
+                        title: `Số lượng sản phẩm ${product.Title} trong kho không đủ!`,
+                        message: "Vui lòng giảm số lượng",
+                        type: "warning",
+                        ...configNotify
+                    });
+                    check = true;
+                }
+            })
+            if (!check) {
+                history.push('/checkout');
+            }
         }
     }
 
@@ -211,11 +271,11 @@ const Cart = () => {
                         <div className="col-auto">
                             <label for="inputPassword2" className="visually-hidden">Mã Giảm Giá</label>
                             <input type="text" className="form-control" placeholder="Nhập mã giảm giá ..."
-                                    value={inputDiscount} onChange={handleDiscountChange} />
+                                value={inputDiscount} onChange={handleDiscountChange} />
                         </div>
                         <div className="col-auto">
                             <button className="btn btn-primary mb-3"
-                                    onClick = {handleDiscount}
+                                onClick={handleDiscount}
                             >Áp Dụng
                             </button>
                         </div>
@@ -230,13 +290,13 @@ const Cart = () => {
             <div className="row">
                 <div className="col-6">
                     <a className="btn btn-style-1 btn-success btn-block"
-                        onClick = {handleBuyMore}>
+                        onClick={handleBuyMore}>
                         &nbsp;Tiếp tục mua hàng
                     </a>
                 </div>
                 <div className="col-6">
-                    <a className="btn btn-style-1 btn-primary btn-block" 
-                        onClick = {handlePay}>
+                    <a className="btn btn-style-1 btn-primary btn-block"
+                        onClick={handlePay}>
                         &nbsp;Tiến hành đặt hàng
                     </a>
                 </div>

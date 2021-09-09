@@ -149,7 +149,7 @@
 .product-description {
     width: 100%;
     padding: 2rem 2rem 3rem;
-    height: 400px;
+    height: max-content;
     overflow: hidden;
     position: relative;
 
@@ -172,13 +172,75 @@
     &__title {
         font-size: 1.5rem;
         font-weight: 600;
-        margin: 2rem 0;
+        margin: 0.6rem 0;
     }
 
     &__content {
         font-size: 1.25rem;
         line-height: 1.875rem;
         text-align: justify;
+
+        &__header {
+            padding-bottom: 14px;
+        }
+
+        &__span {
+            color: $main-color;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        &__span:hover {
+            text-decoration: underline;
+            color: orange;
+        }
+
+        &__body {
+
+            margin: 20px;
+            border: 0.3px solid $main-color;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: row;
+
+            &__img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin-left: 20px;
+                margin-top: 20px;
+            }
+
+            &__comment {
+
+                padding-left: 14px;
+                padding-top: 16px;
+                display: flex;
+                flex-direction: column;
+
+                &__email {
+                    font-size: 1.1rem;
+                }
+
+                &__star {
+                    padding-bottom: 5px;
+                }
+
+                &__date {
+                    font-size: 0.8rem;
+                    font-weight: 0.6rem;
+                }
+
+                & img {
+                    width: 40px;
+                    height: 40px;
+                    object-fit: contain;
+                    border: 0.5px solid black;
+                    margin: 10px 10px 10px 0;
+                }
+
+            }
+        }
     }
 
     &__toggle {
@@ -186,5 +248,37 @@
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
+    }
+}
+
+.product-description1 {
+    width: 100%;
+    padding: 2rem 2rem 3rem;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+
+    @include mobile {
+        display: none;
+    }
+
+    &.mobile {
+        display: none;
+
+        @include mobile {
+            display: block;
+        }
+    }
+
+    &__title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 2rem 0;
+    }
+
+    &__content {
+        font-size: 1.25rem;
+        line-height: 1.875rem;
+        text-align: justify;
     }
 }

@@ -1,9 +1,13 @@
 import axiosClient from "./axiosClient";
 
 const shippingApi = {
-  getAll: (params) => {
+  getAll: (token) => {
     const url = '/shipping';
-    return axiosClient.get(url, { params });
+    return axiosClient.get(url, {headers: {
+      "Content-type": "Application/json",
+      "Authorization": `Bearer ${token}`
+      }   
+  });
   },
 }
 
